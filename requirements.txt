@@ -3,9 +3,10 @@ uvicorn
 python-dotenv
 chromadb
 openai
-google-genai
+google-generativeai
 pillow
+httpx
 markdownify
 semantic-text-splitter
 tqdm
-httpx
+pydantic
