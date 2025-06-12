@@ -93,7 +93,7 @@ Answer:"""
 # === POST Endpoint ===
 @app.post("/")
 async def handle_question(query_req: QueryRequest):
-    answer = generate_answer(
+    answer = await generate_answer(
         query=query_req.query,
         is_image=query_req.is_image,
         image_path=query_req.image_path
