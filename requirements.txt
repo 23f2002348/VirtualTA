@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+python-dotenv
+chromadb
+openai
+google-genai
+pillow
+markdownify
+semantic-text-splitter
+tqdm
+httpx
