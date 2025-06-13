@@ -5,6 +5,8 @@ google.generativeai
 fastapi
 uvicorn
 
+frontmatter
+python-frontmatter
 
 requests
 
