@@ -1,6 +1,5 @@
 google
 google.generativeai
-mimetypes
 urllib
 urllib.parse
 # FastAPI + Starlette
