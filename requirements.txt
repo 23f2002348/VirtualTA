@@ -1,8 +1,13 @@
 google
-
+google.generativeai
+mimetypes
+urllib
+urllib.parse
 # FastAPI + Starlette
 fastapi
 uvicorn
+
+requests
 
 # Middleware / Sessions
 itsdangerous
@@ -14,6 +19,9 @@ httpx
 # Google + OpenAI APIs
 google-genai
 openai
+
+fastapi.middleware.cors
+fastapi.responses
 
 # ChromaDB
 chromadb
