@@ -15,6 +15,7 @@
 #     "openai",
 #     "google"
 #     "base64"
+#     "frontmatter"
 #]
 
 
@@ -31,7 +32,6 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import requests
 import tempfile
-import mimetypes
 from urllib.parse import urlparse
 
 load_dotenv()
@@ -162,6 +162,9 @@ def get_image_description(image_path):
         print("⚠️ Error in image description:", e)
         raise
 
+from frontmatter import load as load_frontmatter
+
+
 def generate_answer(query, image_path=None, top_k=5):
     # If image + text both present, combine smartly
     query_text = query.strip()
@@ -189,12 +192,22 @@ def generate_answer(query, image_path=None, top_k=5):
         docs = results.get("documents", [[]])[0]
         metadatas = results.get("metadatas", [[]])[0]
 
+        for meta in metadatas:
+            if meta.get("source")=="markdown" and "url" not in meta:
+                try:
+                    post = load_frontmatter(meta.get("filepath"))
+                    meta['url'] = post.get("original_url", "")
+                except Exception:
+                    print("ERROR")
+                    continue
+
         context = "\n\n".join(docs)
         links = []
+        print(metadatas)
         for meta in metadatas:
-            url = meta.get("url")
+            url = meta.get('url')
             source = meta.get("source")
-            if url and url.startswith("http") and url not in links:
+            if url and (url.startswith("http") or url.startswith("https") ) and url not in links:
                 title = meta.get("topic_title")
                 text = title if title else source
                 links.append({
