@@ -123,16 +123,24 @@ def generate_answer(query, is_image=False, image_path=None, top_k=5):
     metadatas = results.get("metadatas", [[]])[0]
 
     context = "\n\n".join(docs)
-
     # Extract reference links from metadata
     links = []
     for meta in metadatas:
+        url = meta.get("url")
         source = meta.get("source")
-        if source and source not in links:
-            links.append(source)
+        if url and url.startswith("http") and url not in links:
+            title = meta.get("topic_title")
+            text = title if title else source
+            links.append({
+                "url": url,
+                "text": text
+            })
+    
+    
 
-    prompt = f"""You are an expert assistant. Use the following context to answer the question below.
+    prompt = f"""You are an expert assistant on the Tools in Data Science course of IITM BS Data Science degree. Use the following context to answer the question below and return the relevant links in a list of objects with "url" and "text" keys.
 
+Be precise and clear in your answers and make sure to be contextual and relative to the user's query.
 Context:
 {context}
 
