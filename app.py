@@ -19,6 +19,9 @@
 
 import os
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from fastapi import Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from openai import OpenAI
 from embed import helper
@@ -38,16 +41,67 @@ openai_client = OpenAI(
     base_url="https://aiproxy.sanand.workers.dev/openai/v1"
 )
 
+
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+from starlette.middleware.sessions import SessionMiddleware
+
+app.add_middleware(SessionMiddleware, secret_key="your-random-session-key")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8000"],  # restrict to your frontend origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"]
+)
+class CustomCORSHeadersMiddleware(BaseHTTPMiddleware):
+       async def dispatch(self, request, call_next):
+        # If it's a preflight request, return 200 directly
+        if request.method == "OPTIONS":
+            response = Response(status_code=200)
+        else:
+            response = await call_next(request)
+        
+        response.headers["Access-Control-Allow-Origin"] = "https://exam.sanand.workers.dev"
+        response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS, GET"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Private-Network"] = "true"
+        return response
+
+
+@app.options("/")
+def preflight_handler(path: str):
+    headers = {
+        "Access-Control-Allow-Origin": "https://exam.sanand.workers.dev",
+        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Allow-Private-Network": "true",
+    }
+    return Response(status_code=200, headers=headers)
+"""@app.options("/")
+def options_handler():
+    response = JSONResponse(content={"message": "Preflight OK"})
+    response.headers["Access-Control-Allow-Origin"] = "https://exam.sanand.workers.dev"
+    response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
+"""
+app.add_middleware(CustomCORSHeadersMiddleware)
+
 # === Request Model ===
 class QueryRequest(BaseModel):
-    query: str
+    question: str
     is_image: bool = False
     image_path: str | None = None
 
 # === Helper Functions ===
 def get_image_description(image_path):
-    uploaded_file = genai.upload_file(image_path)
-    response = genai.generate_content(
+    uploaded_file = genai_client.upload_file(image_path)
+    response = genai_client.generate_content(
         model="gemini-1.5-pro",
         contents=[
             uploaded_file,
@@ -56,7 +110,7 @@ def get_image_description(image_path):
     )
     return response.text
 
-async def generate_answer(query, is_image=False, image_path=None, top_k=5):
+def generate_answer(query, is_image=False, image_path=None, top_k=5):
     if is_image:
         if not image_path:
             raise ValueError("image_path is required for image-based queries.")
@@ -66,7 +120,16 @@ async def generate_answer(query, is_image=False, image_path=None, top_k=5):
 
     results = helper(query_text, top_k=top_k)
     docs = results.get("documents", [[]])[0]
+    metadatas = results.get("metadatas", [[]])[0]
+
     context = "\n\n".join(docs)
+
+    # Extract reference links from metadata
+    links = []
+    for meta in metadatas:
+        source = meta.get("source")
+        if source and source not in links:
+            links.append(source)
 
     prompt = f"""You are an expert assistant. Use the following context to answer the question below.
 
@@ -88,17 +151,30 @@ Answer:"""
         temperature=0.3,
     )
 
-    return response.choices[0].message.content.strip()
+    return {
+        "answer": response.choices[0].message.content.strip(),
+        "links": links
+    }
 
 # === POST Endpoint ===
 @app.post("/")
-async def handle_question(query_req: QueryRequest):
-    answer = await generate_answer(
-        query=query_req.query,
-        is_image=query_req.is_image,
-        image_path=query_req.image_path
+async def handle_question(request: Request):
+    # Check Content-Type header
+    if request.headers.get("content-type") != "application/json":
+        raise HTTPException(status_code=415, detail="Content-Type must be application/json")
+
+    # Parse JSON body to your model
+    query_req = await request.json()
+    # Validate using Pydantic
+     # if this is where you're getting query_req
+    query_data = QueryRequest(**query_req)
+    response = generate_answer(
+        query=query_data.question,
+        is_image=query_data.is_image,
+        image_path=query_data.image_path
     )
-    return {"answer": answer}
+
+    return response
 
 if __name__ == "__main__":
     import uvicorn
