@@ -1,13 +1,32 @@
+google
+
+# FastAPI + Starlette
 fastapi
 uvicorn
+
+# Middleware / Sessions
+itsdangerous
 python-dotenv
-chromadb
-openai
-google-genai
-pillow
+
+# CORS
 httpx
+
+# Google + OpenAI APIs
+google-genai
+openai
+
+# ChromaDB
+chromadb
+
+# Optional: if you use this for converting HTML to markdown
 markdownify
-semantic-text-splitter
+
+# Chunking / splitting
+semantic_text_splitter
+
+# Utility
 tqdm
+pillow
+
+# Pydantic for request validation
 pydantic
-google
