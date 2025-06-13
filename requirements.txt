@@ -6,6 +6,8 @@ urllib.parse
 fastapi
 uvicorn
 
+tempfile
+
 requests
 
 # Middleware / Sessions
