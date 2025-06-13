@@ -19,8 +19,6 @@ httpx
 google-genai
 openai
 
-fastapi.middleware.cors
-fastapi.responses
 
 # ChromaDB
 chromadb
