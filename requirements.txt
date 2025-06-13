@@ -6,7 +6,6 @@ urllib.parse
 fastapi
 uvicorn
 
-tempfile
 
 requests
 
