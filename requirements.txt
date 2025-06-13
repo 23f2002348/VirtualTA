@@ -1,7 +1,6 @@
 google
 google.generativeai
-urllib
-urllib.parse
+
 # FastAPI + Starlette
 fastapi
 uvicorn
