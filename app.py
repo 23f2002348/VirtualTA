@@ -227,11 +227,10 @@ def generate_answer(query, image_path=None, top_k=7):
                     "url": url,
                     "text": text
                 })
-    print(context)
+    #print(context)
     links=links+jina_res["links"]
     links= remove_duplicates(links)
-    print("LINKS: "+len(links))
-    print(links)
+    
     prompt = f"""You are an expert assistant on the Tools in Data Science course of IITM BS Data Science degree. Use the following context to answer the question below. For direct questions requiring a specific answer (like for when and where type questions -- try to answer the specific date or time or place), be more detailed and make sure to answer the question with a more strong reply including the required parametric answer.
     Be detailed and clear in your answers and make sure to be contextual and relative to the user's query. Give more importance to the text present in image queries if any and try to answer them.
     Context:
