@@ -233,17 +233,16 @@ def generate_answer(query, image_path=None, top_k=7):
     print("LINKS: "+len(links))
     print(links)
     prompt = f"""You are an expert assistant on the Tools in Data Science course of IITM BS Data Science degree. Use the following context to answer the question below. For direct questions requiring a specific answer (like for when and where type questions -- try to answer the specific date or time or place), be more detailed and make sure to answer the question with a more strong reply including the required parametric answer.
+    Be detailed and clear in your answers and make sure to be contextual and relative to the user's query. Give more importance to the text present in image queries if any and try to answer them.
+    Context:
+    {context}\n{jina_res["documents"]}
 
-Be detailed and clear in your answers and make sure to be contextual and relative to the user's query. Give more importance to the text present in image queries if any and try to answer them.
-Context:
-{context}\n{jina_res["documents"]}
+    Question:
+    {combined_query}
 
-Question:
-{combined_query}
-
-Answer:
-Respond in a detailed manner, ensuring to address the question directly and clearly, while also considering the context provided. This is one of the suggested answers to the question{jina_res["answer"]}.
-Make sure to include any relevant information from the above answer too."""
+    Answer:
+    Respond in a detailed manner, ensuring to address the question directly and clearly, while also considering the context provided. This is one of the suggested answers to the question{jina_res["answer"]}.
+    Make sure to include any relevant information from the above answer too."""
     
     response = openai_client.chat.completions.create(
 
@@ -258,9 +257,7 @@ Make sure to include any relevant information from the above answer too."""
  
     return {
         "answer": response.choices[0].message.content.strip(),
-        "answer": response.candidates[0].content.parts[0].text,
-         "links": links
-         "links": links
+        "links": links
      }
 # === POST Endpoint ===
 @app.post("/")
@@ -286,17 +283,3 @@ if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 8000))  # Use PORT from Render
     uvicorn.run("app:app", host="0.0.0.0", port=port)
-
-
-
-    """response = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt},
-        ],
-        max_tokens=512,
-        temperature=0.3,
-    )"""
-
-    #response.choices[0].message.content.strip()
