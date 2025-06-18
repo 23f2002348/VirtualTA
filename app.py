@@ -217,7 +217,7 @@ def generate_answer(query, image_path=None, top_k=7):
         for meta in metadatas:
             url = meta.get('url',"")
             source = meta.get("source")
-            if url and (url.startswith("http") or url.startswith("https") ) and url not in links:
+            if (url!="") and (url.startswith("http") or url.startswith("https") ) and url not in links:
                 title = meta.get("topic_title")
                 text = docs[metadatas.index(meta)] if docs else ""
                 links.append({
