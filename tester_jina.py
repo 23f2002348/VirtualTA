@@ -36,14 +36,14 @@ def search_collection(query, top_k=7):
     documents = results['documents'][0] if results['documents'] else []
     for meta in results['metadatas'][0]:
         text=""
-        url = meta.get('url', None)
+        url = meta.get('url', "")
         if 'url' in meta:
             text=documents[results['metadatas'][0].index(meta)] if documents else ""
-        
-        links.append({
-                    "url": url,
-                    "text": text
-                })
+        if url!="":  
+            links.append({
+                      "url": url,
+                      "text": text
+                    })
     
     
     
