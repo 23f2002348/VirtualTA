@@ -256,7 +256,7 @@ Make sure to include any relevant information from the above answer too."""
         temperature=0.3,
     )
  
-     return {
+    return {
         "answer": response.choices[0].message.content.strip(),
         "answer": response.candidates[0].content.parts[0].text,
          "links": links
