@@ -21,6 +21,7 @@
 
 import base64
 import os
+import json
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi import Request, HTTPException
@@ -28,6 +29,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from openai import OpenAI
 from embed import helper
+from tester_jina import search_collection as jina
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import requests
@@ -162,10 +164,20 @@ def get_image_description(image_path):
         print("⚠️ Error in image description:", e)
         raise
 
+def remove_duplicates(dict_list):
+    seen = set()
+    result = []
+    for d in dict_list:
+        key = json.dumps(d, sort_keys=True)
+        if key not in seen:
+            seen.add(key)
+            result.append(d)
+    return result
+
 from frontmatter import load as load_frontmatter
 
 
-def generate_answer(query, image_path=None, top_k=5):
+def generate_answer(query, image_path=None, top_k=7):
     # If image + text both present, combine smartly
     query_text = query.strip()
     if image_path:
@@ -185,9 +197,10 @@ def generate_answer(query, image_path=None, top_k=5):
         combined_query = query.strip()
 
     context="No question data provided"
+
     print(combined_query)
     if combined_query!="":
-        
+        jina_res=jina(combined_query)
         results = helper(combined_query, top_k=top_k)
         docs = results.get("documents", [[]])[0]
         metadatas = results.get("metadatas", [[]])[0]
@@ -209,24 +222,31 @@ def generate_answer(query, image_path=None, top_k=5):
             source = meta.get("source")
             if url and (url.startswith("http") or url.startswith("https") ) and url not in links:
                 title = meta.get("topic_title")
-                text = title if title else source
+                text = docs[metadatas.index(meta)] if docs else ""
                 links.append({
                     "url": url,
                     "text": text
                 })
+    print(context)
+    links=links+jina_res["links"]
+    links= remove_duplicates(links)
+    print("LINKS: "+len(links))
+    print(links)
+    prompt = f"""You are an expert assistant on the Tools in Data Science course of IITM BS Data Science degree. Use the following context to answer the question below. For direct questions requiring a specific answer (like for when and where type questions -- try to answer the specific date or time or place), be more detailed and make sure to answer the question with a more strong reply including the required parametric answer.
 
-    prompt = f"""You are an expert assistant on the Tools in Data Science course of IITM BS Data Science degree. Use the following context to answer the question below.
-
-Be precise and clear in your answers and make sure to be contextual and relative to the user's query. Give more importance to the text present in image queries if any and try to answer them.
+Be detailed and clear in your answers and make sure to be contextual and relative to the user's query. Give more importance to the text present in image queries if any and try to answer them.
 Context:
-{context}
+{context}\n{jina_res["documents"]}
 
 Question:
 {combined_query}
 
-Answer:"""
-
+Answer:
+Respond in a detailed manner, ensuring to address the question directly and clearly, while also considering the context provided. This is one of the suggested answers to the question{jina_res["answer"]}.
+Make sure to include any relevant information from the above answer too."""
+    
     response = openai_client.chat.completions.create(
+
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
@@ -235,11 +255,13 @@ Answer:"""
         max_tokens=512,
         temperature=0.3,
     )
-
-    return {
+ 
+     return {
         "answer": response.choices[0].message.content.strip(),
-        "links": links
-    }
+        "answer": response.candidates[0].content.parts[0].text,
+         "links": links
+         "links": links
+     }
 # === POST Endpoint ===
 @app.post("/")
 async def handle_question(request: Request):
@@ -261,7 +283,20 @@ async def handle_question(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
-    import os
 
     port = int(os.environ.get("PORT", 8000))  # Use PORT from Render
     uvicorn.run("app:app", host="0.0.0.0", port=port)
+
+
+
+    """response = openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt},
+        ],
+        max_tokens=512,
+        temperature=0.3,
+    )"""
+
+    #response.choices[0].message.content.strip()
