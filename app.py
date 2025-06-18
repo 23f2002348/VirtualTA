@@ -45,10 +45,6 @@ app = FastAPI()
 
 # chromadb client init here
 # ...
-openai_client = OpenAI(
-    api_key=os.getenv("AIPROXY_TOKEN"),
-    base_url="https://aiproxy.sanand.workers.dev/openai/v1"
-)
 
 
 
