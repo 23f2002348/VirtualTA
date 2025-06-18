@@ -3,6 +3,7 @@ import json
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from dotenv import load_dotenv
+from tester import get_embeddings
 
 load_dotenv()
 
@@ -77,7 +78,8 @@ def is_collection_empty():
     return len(collection.get(include=["ids"])["ids"]) == 0
 
 def search_collection(query_text, top_k=7):
-    results = collection.query(query_texts=[query_text], n_results=top_k)
+    query_embeddings=get_embeddings(query_text,top_k=7)
+    results = collection.query(query_embeddings=[query_embeddings], n_results=top_k)
     # results is a dict with keys: 'ids', 'documents', 'metadatas'
     return results
 
