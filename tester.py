@@ -54,6 +54,9 @@ def search_collection(embeddings, top_k=7):
 
 
 
+AIPIPE_TOKEN = os.getenv('AIPIPE_TOKEN')
+
+
 def get_embeddings(query):
     
     url = 'https://aipipe.org/openai/v1/embeddings'  # API endpoint for embeddings
@@ -63,7 +66,7 @@ def get_embeddings(query):
     }
     
     # Set the headers for the request
-    AIPIPE_TOKEN = os.getenv('AIPIPE_TOKEN')
+    
     headers=dict()
     headers = {
     "Content-Type": "application/json",
@@ -78,7 +81,23 @@ def get_embeddings(query):
     else:
         raise Exception("Error fetching embeddings: " + response.text)
     
-
+def get_response(prompt):
+    #Use AIPIPE to get response for the prompt
+    url = 'https://aipipe.org/openai/v1/responses' 
+    
+    data = {
+        "model": "gpt-4.1-nano",
+        "input": prompt
+    }
+    headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + AIPIPE_TOKEN
+    }
+    response = requests.post(url, json=data, headers=headers)
+    if response.status_code == 200:
+        return response.json()['output'][0]['content'][0]['text']
+    else:
+        raise Exception("Error fetching response: " + response.text)
 
 query=input("Enter question")
 embeddings = get_embeddings(query)
