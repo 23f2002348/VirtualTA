@@ -35,6 +35,7 @@ from dotenv import load_dotenv
 import requests
 import tempfile
 from urllib.parse import urlparse
+from tester import get_embeddings, get_response
 
 load_dotenv()
 
@@ -243,19 +244,10 @@ def generate_answer(query, image_path=None, top_k=7):
     Respond in a detailed manner, ensuring to address the question directly and clearly, while also considering the context provided. This is one of the suggested answers to the question{jina_res["answer"]}.
     Make sure to include any relevant information from the above answer too."""
     
-    response = openai_client.chat.completions.create(
-
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt},
-        ],
-        max_tokens=512,
-        temperature=0.3,
-    )
+    response = get_response(prompt)
  
     return {
-        "answer": response.choices[0].message.content.strip(),
+        "answer": response,
         "links": links
      }
 # === POST Endpoint ===
